@@ -1,0 +1,108 @@
+// SPDX-License-Identifier: GPL-3.0
+
+pragma solidity >=0.8.2 <0.9.0;
+
+contract TicTacToe {
+
+    // Variables
+    struct Partida {
+        address jugador1;
+        address jugador2;
+        address ganador;
+        uint[4][4] jugadas;
+        address ultimoTurno;
+    }
+    Partida[] partidas;
+
+    // Constructor
+
+    // Public Functions
+    function crearPartida(address jug1, address jug2) public returns (uint) {
+        require(jug1 != jug2);
+        uint idPartida = partidas.length;
+        Partida memory partida;
+        partida.jugador1 = jug1;
+        partida.jugador2 = jug2;
+        partidas.push(partida);
+        return idPartida;
+    }
+
+    function jugar(uint idPartida, uint horizontal, uint vertical) public {
+        // validaciones
+        Partida memory partida = partidas[idPartida];
+        require(msg.sender == partida.jugador1 || msg.sender == partida.jugador2);
+        require(horizontal > 0 && horizontal < 4);
+        require(vertical > 0  && horizontal < 4);
+        require(msg.sender != partida.ultimoTurno);
+        require(partida.jugadas[horizontal][vertical] == 0);
+        require(! partidaTerminada(partida));
+
+        // guardar la jugada
+        guardarMovimiento(idPartida, horizontal, vertical);
+        // actualizar partida
+        partida = partidas[idPartida];
+
+        // chequear si hay un ganador o si la grilla esta llena
+        uint ganador = obtenerGanador(partida);
+        guardarGanador(ganador, idPartida);
+
+        partidas[idPartida].ultimoTurno = msg.sender;
+    }
+
+    function verPartida(uint idPartida) public view returns (uint[4][4] memory) {
+        return partidas[idPartida].jugadas;
+    }
+
+    // Private functions
+    function guardarGanador(uint ganador, uint idPartida) private {
+        if (ganador != 0) {
+            if (ganador == 1) partidas[idPartida].ganador = partidas[idPartida].jugador1;
+            else partidas[idPartida].ganador = partidas[idPartida].jugador2;
+        }
+    }
+
+    /**
+     * Check if exist a winning move
+     * return 1 (jug1) or 2 (jug2)
+     */
+    function chequearLinea(uint[4][4] memory jugadas, uint x1, uint y1, uint x2, uint y2, uint x3, uint y3) private pure returns (uint) {
+        if ((jugadas[x1][y1] == jugadas[x2][y2]) && (jugadas[x2][y2] == jugadas[x3][y3]))
+            return jugadas[x1][y1];
+        return 0;
+    }
+
+    /**
+     * Get winner
+     * return 0: no winner, 1: jug1, 2: jug2
+     */
+    function obtenerGanador(Partida memory partida) private pure returns (uint) {
+        // check diagonal
+        uint ganador = chequearLinea(partida.jugadas, 1, 1, 2, 2, 3, 3);
+        // check otra diagonal
+        if (ganador == 0) ganador = chequearLinea(partida.jugadas, 3, 1, 2, 2, 1, 3);
+        // check cols
+        if (ganador == 0) ganador = chequearLinea(partida.jugadas, 1, 1, 1, 2, 1, 3);
+        if (ganador == 0) ganador = chequearLinea(partida.jugadas, 2, 1, 2, 2, 2, 3);
+        if (ganador == 0) ganador = chequearLinea(partida.jugadas, 3, 1, 3, 2, 3, 3);
+        // check rows
+        if (ganador == 0) ganador = chequearLinea(partida.jugadas, 1, 1, 2, 1, 3, 1);
+        if (ganador == 0) ganador = chequearLinea(partida.jugadas, 1, 2, 2, 2, 3, 2);
+        if (ganador == 0) ganador = chequearLinea(partida.jugadas, 1, 3, 2, 3, 3, 3);
+        return ganador;
+    }
+
+    function guardarMovimiento(uint idPartida, uint h, uint v) private {
+        if (msg.sender == partidas[idPartida].jugador1) partidas[idPartida].jugadas[h][v] = 1;
+        else partidas[idPartida].jugadas[h][v] = 2;
+    }
+
+    function partidaTerminada(Partida memory partida) private pure returns(bool) {
+        if (partida.ganador != address(0)) return true;
+        for (uint x = 1; x < 4; x++) {
+            for (uint y = 1; y < 4; y++) {
+                if (partida.jugadas[x][y] == 0) return false;
+            }
+        }
+        return true;
+    }
+}
