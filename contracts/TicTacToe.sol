@@ -2,6 +2,7 @@
 pragma solidity >=0.8.2 <0.9.0;
 
 import "./Achievement.sol";
+import "./Moneda.sol";
 
 contract TicTacToe {
 
@@ -15,11 +16,14 @@ contract TicTacToe {
     }
     Partida[] partidas;
     mapping (address => uint) partidasGanadas;
+    mapping (address => uint) logrosObtenidos;
     Achievement achievement;
+    Moneda moneda;
 
     // Constructor
-    constructor(address contratoAchievement) {
+    constructor(address contratoAchievement, address contratoMoneda) {
         achievement = Achievement(contratoAchievement);
+        moneda = Moneda(contratoMoneda);
     }
 
     // Public Functions
@@ -66,14 +70,24 @@ contract TicTacToe {
         if (ganador == 1) partidas[idPartida].ganador = partidas[idPartida].jugador1;
         else partidas[idPartida].ganador = partidas[idPartida].jugador2;
 
-        // Give achievement
+        // Give achievement ERC721
         partidasGanadas[partidas[idPartida].ganador]++;
         if (partidasGanadas[partidas[idPartida].ganador] == 5) {
             achievement.emitir(partidas[idPartida].ganador);
+            logrosObtenidos[partidas[idPartida].ganador]++;
         }
-        // Give extra achievement
-        if (chequearGrillaCompleta(partidas[idPartida].jugadas))
+        // Give extra achievement ERC721
+        if (chequearGrillaCompleta(partidas[idPartida].jugadas)) {
             achievement.emitir(partidas[idPartida].ganador);
+            logrosObtenidos[partidas[idPartida].ganador]++;
+        }
+        // Give default ERC20 token
+        moneda.emitir(partidas[idPartida].ganador, 1);
+
+        // Give extra ERC20 token because has achievement
+        if (logrosObtenidos[partidas[idPartida].ganador] > 0) {
+            moneda.emitir(partidas[idPartida].ganador, 2);
+        }
     }
 
     /**
