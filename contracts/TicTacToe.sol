@@ -16,7 +16,6 @@ contract TicTacToe {
     }
     Partida[] partidas;
     mapping (address => uint) partidasGanadas;
-    mapping (address => uint) logrosObtenidos;
     Achievement achievement;
     Moneda moneda;
 
@@ -74,19 +73,17 @@ contract TicTacToe {
         partidasGanadas[partidas[idPartida].ganador]++;
         if (partidasGanadas[partidas[idPartida].ganador] == 5) {
             achievement.emitir(partidas[idPartida].ganador);
-            logrosObtenidos[partidas[idPartida].ganador]++;
         }
         // Give extra achievement ERC721
         if (chequearGrillaCompleta(partidas[idPartida].jugadas)) {
             achievement.emitir(partidas[idPartida].ganador);
-            logrosObtenidos[partidas[idPartida].ganador]++;
         }
-        // Give default ERC20 token
-        moneda.emitir(partidas[idPartida].ganador, 1);
 
         // Give extra ERC20 token because has achievement
-        if (logrosObtenidos[partidas[idPartida].ganador] > 0) {
+        if (achievement.balanceOf(partidas[idPartida].ganador) > 0) {
             moneda.emitir(partidas[idPartida].ganador, 2);
+        } else {
+            moneda.emitir(partidas[idPartida].ganador, 1);
         }
     }
 
