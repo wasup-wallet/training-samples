@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
-
 pragma solidity >=0.8.2 <0.9.0;
+
+import "./Achievement.sol";
 
 contract TicTacToe {
 
@@ -13,8 +14,13 @@ contract TicTacToe {
         address ultimoTurno;
     }
     Partida[] partidas;
+    mapping (address => uint) partidasGanadas;
+    Achievement achievement;
 
     // Constructor
+    constructor(address contratoAchievement) {
+        achievement = Achievement(contratoAchievement);
+    }
 
     // Public Functions
     function crearPartida(address jug1, address jug2) public returns (uint) {
@@ -42,9 +48,11 @@ contract TicTacToe {
         // actualizar partida
         partida = partidas[idPartida];
 
-        // chequear si hay un ganador o si la grilla esta llena
+        // chequear si hay un ganador (ganado != 0) o si la grilla esta llena
         uint ganador = obtenerGanador(partida);
-        guardarGanador(ganador, idPartida);
+        if (ganador != 0) {
+            guardarGanador(ganador, idPartida);
+        }
 
         partidas[idPartida].ultimoTurno = msg.sender;
     }
@@ -55,9 +63,12 @@ contract TicTacToe {
 
     // Private functions
     function guardarGanador(uint ganador, uint idPartida) private {
-        if (ganador != 0) {
-            if (ganador == 1) partidas[idPartida].ganador = partidas[idPartida].jugador1;
-            else partidas[idPartida].ganador = partidas[idPartida].jugador2;
+        if (ganador == 1) partidas[idPartida].ganador = partidas[idPartida].jugador1;
+        else partidas[idPartida].ganador = partidas[idPartida].jugador2;
+
+        partidasGanadas[partidas[idPartida].ganador]++;
+        if (partidasGanadas[partidas[idPartida].ganador] == 5) {
+            achievement.emitir(partidas[idPartida].ganador);
         }
     }
 
