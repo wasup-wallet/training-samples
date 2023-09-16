@@ -48,7 +48,7 @@ contract TicTacToe {
         // actualizar partida
         partida = partidas[idPartida];
 
-        // chequear si hay un ganador (ganado != 0) o si la grilla esta llena
+        // chequear si hay un ganador (ganador != 0) o si la grilla esta llena
         uint ganador = obtenerGanador(partida);
         if (ganador != 0) {
             guardarGanador(ganador, idPartida);
@@ -66,10 +66,14 @@ contract TicTacToe {
         if (ganador == 1) partidas[idPartida].ganador = partidas[idPartida].jugador1;
         else partidas[idPartida].ganador = partidas[idPartida].jugador2;
 
+        // Give achievement
         partidasGanadas[partidas[idPartida].ganador]++;
         if (partidasGanadas[partidas[idPartida].ganador] == 5) {
             achievement.emitir(partidas[idPartida].ganador);
         }
+        // Give extra achievement
+        if (chequearGrillaCompleta(partidas[idPartida].jugadas))
+            achievement.emitir(partidas[idPartida].ganador);
     }
 
     /**
@@ -80,6 +84,19 @@ contract TicTacToe {
         if ((jugadas[x1][y1] == jugadas[x2][y2]) && (jugadas[x2][y2] == jugadas[x3][y3]))
             return jugadas[x1][y1];
         return 0;
+    }
+
+    /**
+     * Check completed grid
+     * return true o false
+     */
+    function chequearGrillaCompleta(uint[4][4] memory jugadas) private pure returns (bool) {
+        for (uint x = 1; x < 4; x++) {
+            for (uint y = 1 ; y < 4; y++) {
+                if (jugadas[x][y] == 0) return false;
+            }
+        }
+        return true;
     }
 
     /**
